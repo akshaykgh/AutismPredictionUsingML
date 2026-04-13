@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+dist/
+backend/models/*.joblib
+backend/models/*.json
+backend/reports/*.json
+data/generated/
