@@ -316,3 +316,22 @@ def load_trained_model() -> tuple[dict, dict]:
     selected = metadata.get("selected_model", "unknown")
     metadata = {**metadata, "active_model": metadata.get("active_model", selected)}
     return model_bundle, metadata
+
+
+def set_active_model(model_name: str) -> tuple[dict, dict]:
+    """Persist which trained classifier is active; requires ``all_models.joblib`` from training."""
+    if not ALL_MODELS_PATH.exists():
+        raise ValueError(
+            "Trained multi-model bundle not found. Run training once (e.g. python backend/train.py or POST /api/retrain) "
+            "to enable switching."
+        )
+    all_models = joblib.load(ALL_MODELS_PATH)
+    if model_name not in all_models:
+        raise ValueError(f"Unknown model: {model_name!r}")
+    metadata = json.loads(METADATA_PATH.read_text())
+    available = metadata.get("available_models") or list(all_models.keys())
+    if model_name not in available:
+        raise ValueError(f"Model {model_name!r} is not available.")
+    ACTIVE_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ACTIVE_MODEL_PATH.write_text(json.dumps({"active": model_name}))
+    return load_trained_model()

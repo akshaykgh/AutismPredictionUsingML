@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 from asd_ml.config import FEATURE_COLUMNS, METADATA_PATH, MODEL_PATH
 from asd_ml.data import ensure_sample_dataset
-from asd_ml.modeling import load_trained_model, train_and_save_models
+from asd_ml.modeling import load_trained_model, set_active_model, train_and_save_models
 
 
 def bootstrap_model() -> tuple[dict, dict]:
@@ -34,6 +34,7 @@ def metadata():
     return jsonify(model_metadata)
 
 
+
 @app.post("/api/predict")
 def predict():
     payload = request.get_json(silent=True) or {}
@@ -42,7 +43,6 @@ def predict():
         return jsonify({"error": "Missing required fields", "missing_fields": missing}), 400
 
     input_frame = pd.DataFrame([{column: payload[column] for column in FEATURE_COLUMNS}])
-    print(model_bundle)
     probability = float(model_bundle["pipeline"].predict_proba(input_frame)[:, 1][0])
     threshold = float(model_bundle["threshold"])
     prediction = int(probability >= threshold)
@@ -54,6 +54,20 @@ def predict():
         "label": "High ASD risk" if prediction else "Low ASD risk",
     }
     return jsonify(response)
+
+
+@app.post("/api/select-model")
+def select_model():
+    global model_bundle, model_metadata
+    payload = request.get_json(silent=True) or {}
+    model_name = payload.get("model")
+    if not model_name:
+        return jsonify({"error": "Missing required field: model"}), 400
+    try:
+        model_bundle, model_metadata = set_active_model(model_name)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"metadata": model_metadata})
 
 
 @app.post("/api/retrain")

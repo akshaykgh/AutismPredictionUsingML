@@ -635,12 +635,20 @@ function App() {
         <section className="panel">
           <div className="panel-header">
             <h2>Top Predictors</h2>
-            <p>Feature importance from the selected production model.</p>
+            <p>
+              Feature importance from the selected production model. AQ-10 items show the question text
+              for the age group selected in the form.
+            </p>
           </div>
           <div className="importance-chart">
             {(activeFeatureImportance || []).map((feature) => (
               <div className="importance-row" key={feature.feature}>
-                <span>{feature.feature.replace(/^numeric__|^categorical__/, "")}</span>
+                <span
+                  className="importance-row-label"
+                  title={feature.feature.replace(/^numeric__|^categorical__/, "")}
+                >
+                  {getImportanceLabel(feature.feature, form.age_group)}
+                </span>
                 <div className="importance-bar">
                   <div
                     className="importance-fill"
@@ -691,6 +699,29 @@ function toLabel(value) {
   return String(value)
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+/** Map sklearn feature names (e.g. numeric__a5_score, categorical__family_asd_yes) to readable labels. */
+function getImportanceLabel(rawFeature, ageGroup) {
+  const cleaned = rawFeature.replace(/^numeric__|^categorical__/, "");
+  if (fieldLabels[cleaned]) {
+    return fieldLabels[cleaned];
+  }
+  if (/^a\d+_score$/.test(cleaned)) {
+    const items = aq10QuestionSets[ageGroup] || aq10AdultItems;
+    const item = items.find((q) => q.field === cleaned);
+    if (item) {
+      return item.prompt;
+    }
+  }
+  for (const field of Object.keys(categoricalOptions)) {
+    const prefix = `${field}_`;
+    if (cleaned.startsWith(prefix)) {
+      const rest = cleaned.slice(prefix.length).replace(/_/g, " ");
+      return `${fieldLabels[field]} (${toLabel(rest)})`;
+    }
+  }
+  return toLabel(cleaned.replace(/_/g, " "));
 }
 
 export default App;
