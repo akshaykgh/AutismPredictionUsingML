@@ -414,10 +414,6 @@ function App() {
         <div>
           <p className="eyebrow">AQ-10 Screening</p>
           <h1>Autism screening with age-appropriate AQ-10 items.</h1>
-          <p className="hero-copy">
-            Child and adolescent use parent/caregiver report (S/he); adult uses self-report (I).
-            Responses map to the same binary features for the model before calling the Flask API.
-          </p>
         </div>
         <div className="hero-panel">
           <div className="metric-card emphasis">
