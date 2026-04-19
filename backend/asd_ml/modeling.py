@@ -25,7 +25,9 @@ except Exception as error:  # pragma: no cover - depends on local native runtime
     XGBOOST_IMPORT_ERROR = str(error)
 
 from .config import (
+    ACTIVE_MODEL_PATH,
     AGE_GROUP_COLUMN,
+    ALL_MODELS_PATH,
     CATEGORICAL_COLUMNS,
     FEATURE_COLUMNS,
     METADATA_PATH,
@@ -190,6 +192,7 @@ def train_and_save_models(dataset: pd.DataFrame, random_state: int = 42) -> Trai
     best_roc_auc = float("-inf")
 
     model_results = []
+    trained_bundles: dict[str, dict] = {}
     for name, pipeline, param_grid in build_search_space(random_state=random_state):
         search = GridSearchCV(
             estimator=pipeline,
@@ -199,18 +202,30 @@ def train_and_save_models(dataset: pd.DataFrame, random_state: int = 42) -> Trai
             n_jobs=1,
             refit=True,
         )
+        print(pipeline.steps)
         search.fit(x_train, y_train)
         probabilities = search.best_estimator_.predict_proba(x_test)[:, 1]
         threshold, metrics = select_threshold(y_test, probabilities)
+        baseline_predictions = (probabilities >= 0.5).astype(int)
+        baseline_fn = int(confusion_matrix(y_test, baseline_predictions).ravel()[2])
+        optimized_fn = metrics["false_negatives"]
+        fn_reduction = round(((baseline_fn - optimized_fn) / baseline_fn) * 100, 2) if baseline_fn else 0.0
         metrics.update(
             {
                 "model_name": name,
                 "threshold": threshold,
                 "best_params": search.best_params_,
                 "cv_roc_auc": float(round(search.best_score_, 4)),
+                "false_negative_reduction_pct": fn_reduction,
+                "feature_importance": _feature_importances(search.best_estimator_),
             }
         )
         model_results.append(metrics)
+        trained_bundles[name] = {
+            "pipeline": search.best_estimator_,
+            "threshold": threshold,
+            "feature_columns": FEATURE_COLUMNS,
+        }
 
         if best_search is None or metrics["roc_auc"] > best_roc_auc:
             best_search = search
@@ -249,6 +264,7 @@ def train_and_save_models(dataset: pd.DataFrame, random_state: int = 42) -> Trai
 
     metadata = {
         "selected_model": best_name,
+        "active_model": best_name,
         "available_models": [result["model_name"] for result in model_results],
         "xgboost_enabled": XGBClassifier is not None,
         "xgboost_import_error": XGBOOST_IMPORT_ERROR,
@@ -276,11 +292,27 @@ def train_and_save_models(dataset: pd.DataFrame, random_state: int = 42) -> Trai
         },
         MODEL_PATH,
     )
+    joblib.dump(trained_bundles, ALL_MODELS_PATH)
+    ACTIVE_MODEL_PATH.write_text(json.dumps({"active": best_name}))
     METADATA_PATH.write_text(json.dumps(metadata, indent=2))
     return TrainingArtifacts(estimator=best_search, metadata=metadata)
 
 
 def load_trained_model() -> tuple[dict, dict]:
-    model_bundle = joblib.load(MODEL_PATH)
     metadata = json.loads(METADATA_PATH.read_text())
+    if ALL_MODELS_PATH.exists() and ACTIVE_MODEL_PATH.exists():
+        all_models = joblib.load(ALL_MODELS_PATH)
+        active = json.loads(ACTIVE_MODEL_PATH.read_text()).get("active")
+        if not active or active not in all_models:
+            active = metadata.get("selected_model")
+            if active not in all_models:
+                active = next(iter(all_models))
+            ACTIVE_MODEL_PATH.write_text(json.dumps({"active": active}))
+        model_bundle = all_models[active]
+        metadata = {**metadata, "active_model": active}
+        return model_bundle, metadata
+
+    model_bundle = joblib.load(MODEL_PATH)
+    selected = metadata.get("selected_model", "unknown")
+    metadata = {**metadata, "active_model": metadata.get("active_model", selected)}
     return model_bundle, metadata

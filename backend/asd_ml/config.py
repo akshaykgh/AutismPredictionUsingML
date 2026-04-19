@@ -49,3 +49,5 @@ AGE_GROUP_RANGES = {
 
 MODEL_PATH = MODELS_DIR / "best_model.joblib"
 METADATA_PATH = MODELS_DIR / "model_metadata.json"
+ALL_MODELS_PATH = MODELS_DIR / "all_models.joblib"
+ACTIVE_MODEL_PATH = MODELS_DIR / "active_model.json"

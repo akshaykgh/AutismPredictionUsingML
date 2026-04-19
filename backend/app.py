@@ -42,6 +42,7 @@ def predict():
         return jsonify({"error": "Missing required fields", "missing_fields": missing}), 400
 
     input_frame = pd.DataFrame([{column: payload[column] for column in FEATURE_COLUMNS}])
+    print(model_bundle)
     probability = float(model_bundle["pipeline"].predict_proba(input_frame)[:, 1][0])
     threshold = float(model_bundle["threshold"])
     prediction = int(probability >= threshold)

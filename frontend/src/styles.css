@@ -76,7 +76,8 @@ select {
 .history-card span,
 .history-card time,
 .age-group-row span,
-label span {
+label span,
+.field-help {
   color: var(--muted);
 }
 
@@ -125,6 +126,44 @@ label span {
   color: rgba(255, 249, 242, 0.8);
 }
 
+.metric-card.emphasis .model-select {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff9f2;
+  font-weight: 700;
+  font-size: 1.25rem;
+  font-family: "Space Grotesk", sans-serif;
+  cursor: pointer;
+}
+
+.metric-card.emphasis .model-select:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.metric-card.emphasis .model-select option {
+  color: #1f2933;
+  background: #fff;
+}
+
+.model-select-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(255, 249, 242, 0.85);
+}
+
+.model-select-hint .inline-code {
+  font-size: 0.78em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1.25fr 0.95fr;
@@ -147,6 +186,28 @@ label span {
   margin-top: 28px;
 }
 
+.subsection {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.subsection h3 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.15rem;
+}
+
+.subsection-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.subsection-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -157,6 +218,92 @@ label {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.field-help {
+  display: block;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  margin-top: -2px;
+}
+
+.question-list,
+.slider-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.question-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(82, 96, 109, 0.14);
+}
+
+.question-card strong {
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.question-meta {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.answer-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.choice-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fffdf9;
+  border: 1px solid rgba(82, 96, 109, 0.18);
+  cursor: pointer;
+}
+
+.choice-chip input {
+  margin: 0;
+  padding: 0;
+}
+
+.choice-chip span {
+  color: var(--text);
+}
+
+.slider-field {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.slider-labels strong {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+input[type="range"] {
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 input,
@@ -280,7 +427,8 @@ select {
   .metric-grid,
   .result-grid,
   .form-grid,
-  .importance-row {
+  .importance-row,
+  .answer-row {
     grid-template-columns: 1fr;
   }
 
